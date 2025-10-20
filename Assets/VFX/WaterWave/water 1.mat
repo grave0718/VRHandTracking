@@ -1,0 +1,132 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-1822620140323476288
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 9
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: water 1
+  m_Shader: {fileID: -6465566751694194690, guid: 8b85ca9ed8332754a93126006c0d23cd,
+    type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses:
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _Noise_texture:
+        m_Texture: {fileID: 2800000, guid: 542959bf091da104da1e54ba86715853, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RE_wavetx:
+        m_Texture: {fileID: 2800000, guid: 5b3c96b591f184f4fbd157b7df7cbd09, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Wa_TX:
+        m_Texture: {fileID: 2800000, guid: 45028bc1c08aa7742a8269b3065bb459, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Wave:
+        m_Texture: {fileID: 2800000, guid: 4297a97616bfe024db1819c3bfcc9aae, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Wave_Texture2D:
+        m_Texture: {fileID: 2800000, guid: 542959bf091da104da1e54ba86715853, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _main:
+        m_Texture: {fileID: 2800000, guid: 1986162fde89da340ac7ff8d4909f042, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _w_tx:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Duration: 0.5
+    - _Float: 0
+    - _Gradient_power: 3
+    - _Noise_Power: 1
+    - _Nomal_Power: 1
+    - _Normal_Scale: 10
+    - _Pulse_Duration: 3
+    - _Pulse_Intensity: 0.5
+    - _Pulse_Speed: 2
+    - _Pulse_StartTime: 0
+    - _Pulse_Width: 0
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _RE_falloff: 0.5
+    - _RE_scrollspeed: 0.1
+    - _RE_speed: 2
+    - _Rim_Power: 0
+    - _Rim_Thikness: 1
+    - _StartTime: 0
+    - _Wa_PO: 0.5
+    - _WaveIntensity: 0.45
+    - _Wave_tex_noise_Flow: 0
+    - _all_power: 1
+    - _mpower: 1
+    - _w_p: 1
+    - _wave_power: 0.5
+    m_Colors:
+    - _BTM_Color: {r: 0.3647059, g: 0.49019608, b: 1, a: 0}
+    - _Noise_Flow: {r: 0, g: -0.5, b: 0, a: 0}
+    - _Noise_Offset: {r: 0, g: 0, b: 0, a: 0}
+    - _Noise_Tiling: {r: 2, g: 2, b: 0, a: 0}
+    - _Normal_Flow: {r: 0, g: 0, b: 0, a: 0}
+    - _Normal_Offset: {r: 1, g: 1, b: 0, a: 0}
+    - _Normal_Tiling: {r: 1, g: 1, b: 0, a: 0}
+    - _Top_color: {r: 0.45882353, g: 0.90588236, b: 1, a: 0}
+    - _Wa_FL: {r: 0, g: -0.5, b: 0, a: 0}
+    - _Wa_OF: {r: 0, g: 0, b: 0, a: 0}
+    - _Wa_TI: {r: 3, g: 3, b: 0, a: 0}
+    - _Wave_Flow: {r: 0.5, g: 0.5, b: 0, a: 0}
+    - _Wave_tex_tiling: {r: 1, g: 1, b: 0, a: 0}
+    - _main_offset: {r: 1, g: 1, b: 0, a: 0}
+    - _maintilling: {r: 1, g: 1, b: 0, a: 0}
+    - _w_f: {r: 0, g: -0.5, b: 0, a: 0}
+    - _w_o: {r: 0, g: 0, b: 0, a: 0}
+    - _w_t: {r: 1, g: 1, b: 0, a: 0}
+    - _wave_color: {r: 0.45882353, g: 0.7607843, b: 1, a: 0.72156864}
+    - _wave_offset: {r: 1, g: 1, b: 0, a: 0}
+    - _wave_tex_offset: {r: 1, g: 1, b: 0, a: 0}
+    - _wave_tiling: {r: 1, g: 1, b: 0, a: 0}
+  m_BuildTextureStacks: []
