@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: water 1
+  m_Name: ocean
   m_Shader: {fileID: -6465566751694194690, guid: 8b85ca9ed8332754a93126006c0d23cd, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -82,7 +82,7 @@ Material:
     - _Duration: 0.5
     - _Float: 0
     - _Gradient_power: 3
-    - _Noise_Power: 1
+    - _Noise_Power: 2
     - _Nomal_Power: 1
     - _Normal_Scale: 10
     - _Pulse_Duration: 3
@@ -98,34 +98,34 @@ Material:
     - _Rim_Power: 0
     - _Rim_Thikness: 1
     - _StartTime: 0
-    - _Wa_PO: 0.5
+    - _Wa_PO: 0
     - _WaveIntensity: 0.45
-    - _Wave_tex_noise_Flow: 0
-    - _all_power: 1
+    - _Wave_tex_noise_Flow: 0.1
+    - _all_power: 2
     - _mpower: 1
     - _w_p: 1
     - _wave_power: 0.5
     m_Colors:
-    - _BTM_Color: {r: 0.5093005, g: 0.82755226, b: 0.990566, a: 1}
-    - _Noise_Flow: {r: 0, g: -0.5, b: 0, a: 0}
+    - _BTM_Color: {r: 0.3647059, g: 0.49019608, b: 1, a: 0}
+    - _Noise_Flow: {r: 0, g: 0.1, b: 0, a: 0}
     - _Noise_Offset: {r: 0, g: 0, b: 0, a: 0}
-    - _Noise_Tiling: {r: 2, g: 2, b: 0, a: 0}
+    - _Noise_Tiling: {r: 10, g: 10, b: 0, a: 0}
     - _Normal_Flow: {r: 0, g: 0, b: 0, a: 0}
     - _Normal_Offset: {r: 1, g: 1, b: 0, a: 0}
     - _Normal_Tiling: {r: 1, g: 1, b: 0, a: 0}
-    - _Top_color: {r: 0.7877358, g: 0.9630845, b: 1, a: 0}
-    - _Wa_FL: {r: 0, g: -0.5, b: 0, a: 0}
+    - _Top_color: {r: 0.45882353, g: 0.90588236, b: 1, a: 0}
+    - _Wa_FL: {r: 0, g: 0.1, b: 0, a: 0}
     - _Wa_OF: {r: 0, g: 0, b: 0, a: 0}
-    - _Wa_TI: {r: 3, g: 3, b: 0, a: 0}
+    - _Wa_TI: {r: 15, g: 15, b: 0, a: 0}
     - _Wave_Flow: {r: 0.5, g: 0.5, b: 0, a: 0}
-    - _Wave_tex_tiling: {r: 1, g: 1, b: 0, a: 0}
+    - _Wave_tex_tiling: {r: 10, g: 10, b: 0, a: 0}
     - _main_offset: {r: 1, g: 1, b: 0, a: 0}
     - _maintilling: {r: 1, g: 1, b: 0, a: 0}
     - _w_f: {r: 0, g: -0.5, b: 0, a: 0}
     - _w_o: {r: 0, g: 0, b: 0, a: 0}
     - _w_t: {r: 1, g: 1, b: 0, a: 0}
     - _wave_color: {r: 0.45882353, g: 0.7607843, b: 1, a: 0.72156864}
-    - _wave_offset: {r: 1, g: 1, b: 0, a: 0}
-    - _wave_tex_offset: {r: 1, g: 1, b: 0, a: 0}
-    - _wave_tiling: {r: 1, g: 1, b: 0, a: 0}
+    - _wave_offset: {r: 1, g: 0, b: 0, a: 0}
+    - _wave_tex_offset: {r: 0, g: 0, b: 0, a: 0}
+    - _wave_tiling: {r: 5, g: 5, b: 0, a: 0}
   m_BuildTextureStacks: []
