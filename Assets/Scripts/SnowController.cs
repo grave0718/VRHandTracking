@@ -37,7 +37,7 @@ public class SnowController : MonoBehaviour
         snowRT.Create();
     }
 
-    void SetRTColorToWhite()
+    public void SetRTColorToWhite()
     {
         int kernel_handle = snowComputeShader.FindKernel(fillWhiteKernel);
         snowComputeShader.SetTexture(kernel_handle, snowImageProperty, snowRT);

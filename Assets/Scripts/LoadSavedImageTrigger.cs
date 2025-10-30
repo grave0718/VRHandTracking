@@ -17,6 +17,13 @@ public class LoadSavedImageTrigger : MonoBehaviour
     private bool _isReady = true;
     private Texture2D _loadedTexture; 
 
+
+    public GameObject objectToActivate1;
+
+    public GameObject objectToActivate2;
+    int resetBool = 0;
+
+
     void Start()
     {
         if (snowSaveManager == null)
@@ -33,6 +40,24 @@ public class LoadSavedImageTrigger : MonoBehaviour
         GetComponent<Collider>().isTrigger = true;
     }
 
+
+    public void DeactivateLoadedImageAndButtons()
+    {
+        if (completeImageRenderer != null)
+        {
+            completeImageRenderer.gameObject.SetActive(false);
+        }
+        if (objectToActivate1 != null)
+        {
+            objectToActivate1.SetActive(false);
+        }
+        if (objectToActivate2 != null)
+        {
+            objectToActivate2.SetActive(false);
+        }
+        Debug.Log($"[{nameof(LoadSavedImageTrigger)}] 불러온 이미지와 관련 버튼을 비활성화했습니다.");
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (_isReady && other.CompareTag(handTag))
@@ -43,7 +68,7 @@ public class LoadSavedImageTrigger : MonoBehaviour
         }
     }
 
-    // [ ----- 이 함수 전체를 수정했습니다 (CS1625 에러 해결) ----- ]
+
     private IEnumerator LoadAndApplyImageRoutine()
     {
         _isReady = false; // 쿨다운 즉시 시작
@@ -73,6 +98,19 @@ public class LoadSavedImageTrigger : MonoBehaviour
                     Debug.Log($"[LoadImageTrigger] {completeImageRenderer.gameObject.name}의 머티리얼에 텍스처 적용!");
                     completeImageRenderer.material.mainTexture = _loadedTexture;
                     completeImageRenderer.gameObject.SetActive(true);
+
+                    if (objectToActivate1 != null)
+                    {
+                        objectToActivate1.SetActive(true);
+                        Debug.Log($"[LoadImageTrigger] {objectToActivate1.name} 활성화!");
+                    }
+
+                    if (objectToActivate2 != null&& resetBool == 0)
+                    {
+                        objectToActivate2.SetActive(true);
+                        Debug.Log($"[LoadImageTrigger] {objectToActivate2.name} 활성화!");
+                        resetBool = 1;
+                    }
                 }
                 else
                 {
@@ -92,7 +130,7 @@ public class LoadSavedImageTrigger : MonoBehaviour
         yield return new WaitForSeconds(cooldownTime);
         _isReady = true;
     }
-    // [ ---------------------------------------------------- ]
+
 
     void OnDestroy()
     {

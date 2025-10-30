@@ -25,6 +25,40 @@ public class UndoRedoManager : MonoBehaviour
 
     // ---------- 외부 호출 API ----------
 
+
+ public void ClearAllHistory()
+    {
+        if (enableDebug) Debug.Log("[HIST] Clearing all history...");
+
+        // Undo 스택 비우기
+        foreach (var stack in _undoMap.Values)
+        {
+            foreach (var snapshot in stack)
+            {
+                SafeDisposeRT(snapshot);
+            }
+            stack.Clear();
+        }
+        _undoMap.Clear();
+
+        // Redo 스택 비우기
+        foreach (var stack in _redoMap.Values)
+        {
+            foreach (var snapshot in stack)
+            {
+                SafeDisposeRT(snapshot);
+            }
+            stack.Clear();
+        }
+        _redoMap.Clear();
+
+        // Base 스냅샷 비우기
+        foreach (var rt in _baseMap.Values) SafeDisposeRT(rt);
+        _baseMap.Clear();
+
+        _lastActiveRT = null;
+    }
+
     /// <summary>표면을 처음 사용할 때 등록 (초기 스냅샷 확보)</summary>
     public void RegisterSurface(RenderTexture rt)
     {

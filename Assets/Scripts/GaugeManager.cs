@@ -17,6 +17,13 @@ public class GaugeManager : MonoBehaviour
         get { return currentGauge > 0; }
     }
 
+
+        public void ResetGauge()
+    {
+        currentGauge = maxGauge;
+        UpdateUIVisual();
+    }
+
     void Start()
     {
         // 게이지 초기화

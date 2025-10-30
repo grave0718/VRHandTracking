@@ -125,6 +125,16 @@ public class SandSwitch : MonoBehaviour
         _currentIndex = nextIndex;
     }
 
+        public void ResetOverlay()
+    {
+        if (_mat != null)
+        {
+            _mat.SetTexture(ID_OverlayTex, null);
+            _currentIndex = -1; // 현재 인덱스도 초기화
+            Debug.Log($"[SandSwitch] Overlay texture has been reset on mat id={_mat.GetInstanceID()}");
+        }
+    }
+
   IEnumerator SwapRoutine(int nextIndex)
     {
         // 1) 알파 ↓ (기존과 동일)
