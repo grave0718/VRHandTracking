@@ -16,12 +16,16 @@ public class SandSwitch : MonoBehaviour
     public Button btnRandom, btn1, btn2, btn3;
 
     [Header("Effect")]
+
+    public bool convertOnCPU = true;
     public float fadeTime = 0.25f;
 
     // Shader Graph property names (Blackboard와 반드시 동일)
     static readonly int ID_OverlayTex   = Shader.PropertyToID("_OverlayTex");
     static readonly int ID_OverlayAlpha = Shader.PropertyToID("_OverlayAlpha");
 
+
+ List<Texture2D> _runtimeGrayscaleTextures;
     Material _mat;         // 실제로 화면에 그려지는 인스턴스 머티리얼
     int _currentIndex = -1;
     Coroutine _fade;
@@ -60,6 +64,24 @@ public class SandSwitch : MonoBehaviour
             enabled = false; return;
         }
 
+        if (textures != null && textures.Count > 0)
+        {
+            if (convertOnCPU)
+            {
+                _runtimeGrayscaleTextures = new List<Texture2D>();
+                foreach (var tex in textures)
+                {
+                    _runtimeGrayscaleTextures.Add(MakeGrayscaleCopy(tex));
+                }
+                Debug.Log($"[SandSwitch] Converted {textures.Count} textures to grayscale on CPU.");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[SandSwitch] No overlay textures assigned.");
+        }
+
+
         // 초기 알파 0
         // _mat.SetFloat(ID_OverlayAlpha, 0f);
 
@@ -95,7 +117,9 @@ public class SandSwitch : MonoBehaviour
 
     void SetTextureOnly(int nextIndex)
     {
-        var tex = textures[nextIndex];
+        var tex = (convertOnCPU && _runtimeGrayscaleTextures != null && nextIndex < _runtimeGrayscaleTextures.Count)
+            ? _runtimeGrayscaleTextures[nextIndex]
+            : textures[nextIndex];
         _mat.SetTexture(ID_OverlayTex, tex);
         Debug.Log($"[SandSwitch] Overlay switched to {nextIndex} ({tex?.name ?? "null"}) on mat id={_mat.GetInstanceID()}");
         _currentIndex = nextIndex;
@@ -143,4 +167,50 @@ public class SandSwitch : MonoBehaviour
         int r; do { r = Random.Range(0, count); } while (r == except);
         return r;
     }
+
+#region Grayscale Conversion
+    Texture2D MakeGrayscaleCopy(Texture2D src)
+    {
+        if (src == null) return null;
+        var readable = GetReadableCopy(src);
+        var cols = readable.GetPixels32();
+        for (int i = 0; i < cols.Length; i++)
+        {
+            var c = cols[i];
+            // ITU-R BT.601 가중치
+            byte g = (byte)Mathf.Clamp(Mathf.RoundToInt(c.r * 0.299f + c.g * 0.587f + c.b * 0.114f), 0, 255);
+            cols[i] = new Color32(g, g, g, c.a);
+        }
+        var tex = new Texture2D(readable.width, readable.height, TextureFormat.RGBA32, false, true);
+        tex.name = src.name + "_Grayscale";
+        tex.SetPixels32(cols);
+        tex.Apply(false, false);
+
+        // GetReadableCopy()가 임시 복사본을 만들었다면 파괴하여 메모리 누수 방지
+        if (!ReferenceEquals(src, readable))
+        {
+            Destroy(readable);
+        }
+
+        return tex;
+    }
+
+    // 읽기 불가 텍스처 대비 안전 복사본
+    Texture2D GetReadableCopy(Texture2D src)
+    {
+        if (src.isReadable) return src;
+
+        RenderTexture rt = RenderTexture.GetTemporary(src.width, src.height, 0, RenderTextureFormat.Default, RenderTextureReadWrite.Linear);
+        Graphics.Blit(src, rt);
+        RenderTexture previous = RenderTexture.active;
+        RenderTexture.active = rt;
+        Texture2D readableText = new Texture2D(src.width, src.height);
+        readableText.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+        readableText.Apply();
+        RenderTexture.active = previous;
+        RenderTexture.ReleaseTemporary(rt);
+        return readableText;
+    }
+    #endregion
 }
+

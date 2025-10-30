@@ -35,8 +35,7 @@ public class SnowPathDrawer : MonoBehaviour
     private bool isDrawingNow = false;
     private RenderTexture activeRTDuringStroke = null;   // 현재 스트로크가 진행 중인 표면
     private RenderTexture lastUsedRTThisFrame = null;    // 이번 프레임에 실제로 사용된 표면
-
-    private void Awake()
+private void Awake()
     {
         // "SnowGround" 태그를 가진 모든 오브젝트를 찾음
         snowControllerObjs = GameObject.FindGameObjectsWithTag("SnowGround");
@@ -46,7 +45,29 @@ public class SnowPathDrawer : MonoBehaviour
             Debug.LogError("GaugeManager가 SnowPathDrawer에 연결되지 않았습니다! Inspector에서 연결해주세요.");
 
         if (undoRedoManager == null)
+        {
             Debug.LogWarning("UndoRedoManager가 연결되지 않았습니다. Undo/Redo가 작동하지 않습니다.");
+        }
+        else
+        {
+            // [ ★★★ 핵심 수정 ★★★ ]
+            // FixedUpdate가 시작되기 전에(그림 그리기 전에),
+            // "깨끗한" 상태의 모든 RT를 미리 등록합니다.
+            Debug.Log($"[HIST] {snowControllerObjs.Length}개의 눈 표면을 찾았습니다. 모두 등록합니다...");
+            foreach (var obj in snowControllerObjs)
+            {
+                SnowController sc = obj.GetComponent<SnowController>();
+                if (sc != null && sc.snowRT != null)
+                {
+                    // 각 컨트롤러가 가진 RT를 Undo 매니저에 등록
+                    undoRedoManager.RegisterSurface(sc.snowRT);
+                }
+                else
+                {
+                    Debug.LogWarning($"SnowGround 오브젝트 {obj.name}에 SnowController 또는 snowRT가 없습니다!");
+                }
+            }
+        }
     }
 
     private void FixedUpdate()
@@ -97,7 +118,7 @@ public class SnowPathDrawer : MonoBehaviour
             if (undoRedoManager != null && activeRTDuringStroke != null)
             {
                 // 표면이 처음이면 등록(베이스 스냅샷 확보)
-                undoRedoManager.RegisterSurface(activeRTDuringStroke);
+                // undoRedoManager.RegisterSurface(activeRTDuringStroke);
                 // 시작 시에는 커밋하지 않음 (끝날 때 1회 커밋)
                 // Debug.Log("[DRAW] Stroke Start");
             }
@@ -110,7 +131,7 @@ public class SnowPathDrawer : MonoBehaviour
             if (undoRedoManager != null)
             {
                 undoRedoManager.CommitStroke(activeRTDuringStroke);         // 이전 표면 커밋
-                undoRedoManager.RegisterSurface(lastUsedRTThisFrame);       // 새 표면 등록
+                // undoRedoManager.RegisterSurface(lastUsedRTThisFrame);       // 새 표면 등록
             }
             activeRTDuringStroke = lastUsedRTThisFrame;
             // Debug.Log("[DRAW] Surface switched mid-stroke → Commit & Start new");

@@ -40,14 +40,23 @@ public class UndoRedoManager : MonoBehaviour
         if (enableDebug) Debug.Log($"[HIST] Surface registered {RtInfo(rt)}");
     }
 
-    /// <summary>스트로크 종료 시 현재 상태를 커밋(히스토리 푸시)</summary>
+/// <summary>스트로크 종료 시 현재 상태를 커밋(히스토리 푸시)</summary>
     public void CommitStroke(RenderTexture rt)
     {
         if (rt == null) return;
-        if (!_undoMap.ContainsKey(rt)) RegisterSurface(rt);
+        
+        // [수정] 이 함수가 RegisterSurface를 호출하면 안 됩니다.
+        // if (!_undoMap.ContainsKey(rt)) RegisterSurface(rt); // <-- 이 라인 삭제!
+
+        // 표면이 등록되지 않았다면 경고 후 종료
+        if (!_undoMap.ContainsKey(rt))
+        {
+            if (enableDebug) Debug.LogWarning($"[HIST] Commit failed. Surface {RtInfo(rt)} is not registered. Call RegisterSurface() first.");
+            return;
+        }
 
         _undoMap[rt].Push(CloneRT(rt));
-        _redoMap[rt].Clear();               // 새로운 브랜치 시작
+        ClearRedoStack(rt);                 // [수정] 메모리 누수 방지
         _lastActiveRT = rt;
 
         TrimHistory(rt);
@@ -55,6 +64,19 @@ public class UndoRedoManager : MonoBehaviour
         if (enableDebug) Debug.Log($"[HIST] Commit stroke {RtInfo(rt)}  Undo={_undoMap[rt].Count}");
     }
 
+
+/// <summary>Redo 스택을 비우면서 스냅샷 메모리도 해제 (메모리 누수 방지)</summary>
+    private void ClearRedoStack(RenderTexture rt)
+    {
+        if (!_redoMap.ContainsKey(rt)) return;
+        
+        var redo = _redoMap[rt];
+        foreach (var snapshot in redo)
+        {
+            SafeDisposeRT(snapshot);
+        }
+        redo.Clear();
+    }
     public void Undo() { Undo(_lastActiveRT); }
     public void Redo() { Redo(_lastActiveRT); }
 
@@ -68,25 +90,30 @@ public class UndoRedoManager : MonoBehaviour
 
         if (undo.Count == 0)
         {
-            if (_baseMap.TryGetValue(rt, out var baseSnap))
-            {
-                redo.Push(CloneRT(rt));
-                Blit(baseSnap, rt);
-                _lastActiveRT = rt;
-                if (enableDebug) Debug.Log("[UNDO] → Base Snapshot 복원");
-            }
+            if (enableDebug) Debug.Log("[UNDO] No history to undo.");
             return;
         }
 
-        redo.Push(CloneRT(rt));           // 현재 상태를 redo로 이동
-        var prev = undo.Pop();            // 이전 스냅샷 적용
-        Blit(prev, rt);
+        var poppedState = undo.Pop();
+        redo.Push(poppedState);
+
+        RenderTexture stateToApply;
+        if (undo.Count > 0)
+        {
+            stateToApply = undo.Peek();
+        }
+        else
+        {
+            stateToApply = _baseMap[rt];
+        }
+
+        Blit(stateToApply, rt);
         _lastActiveRT = rt;
 
-        if (enableDebug) Debug.Log("[UNDO] 실행됨");
+        if (enableDebug) Debug.Log($"[UNDO] Executed. Undo Stack: {undo.Count}");
     }
 
-    /// <summary>특정 표면 다시 실행</summary>
+ /// <summary>특정 표면 다시 실행</summary>
     public void Redo(RenderTexture rt)
     {
         if (rt == null || !_redoMap.ContainsKey(rt)) { WarnNoSurface("Redo"); return; }
@@ -94,15 +121,23 @@ public class UndoRedoManager : MonoBehaviour
         var undo = _undoMap[rt];
         var redo = _redoMap[rt];
 
-        if (redo.Count == 0) return;
+        if (redo.Count == 0)
+        {
+            if (enableDebug) Debug.Log("[REDO] No history to redo.");
+            return;
+        }
 
-        undo.Push(CloneRT(rt));           // 현재 상태를 undo로 이동
-        var next = redo.Pop();            // 다음 스냅샷 적용
+        var next = redo.Pop();
+        undo.Push(next);
+        
         Blit(next, rt);
         _lastActiveRT = rt;
 
-        if (enableDebug) Debug.Log("[REDO] 실행됨");
+        if (enableDebug) Debug.Log($"[REDO] Executed. Redo Stack: {redo.Count}");
     }
+
+
+
 
     // ---------- UI 버튼 래퍼 ----------
     public void OnUndoButton()

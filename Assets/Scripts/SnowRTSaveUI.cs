@@ -1,9 +1,9 @@
 using UnityEngine;
-using UnityEngine.UI;   // UI Button
-using System;
+using UnityEngine.UI;
+using System; // DateTime을 위해 필요
 using System.IO;
 
-public class SandOverlayToggle : MonoBehaviour
+public class SnowRTSaveUI : MonoBehaviour
 {
     [Header("UI")]
     public Button saveButton;
@@ -18,13 +18,12 @@ public class SandOverlayToggle : MonoBehaviour
     public SnowPathDrawer pathDrawer;
     public SnowController snowController;
 
-    // [ ----- 여기를 추가했습니다 ----- ]
-    // 다른 스크립트가 마지막으로 저장된 파일 경로를 읽어갈 수 있도록 public으로 선언
+    // [ ----- 여기를 추가했습니다 (에러 1번 해결) ----- ]
     [Space(10)]
     [Header("출력 (읽기 전용)")]
     [Tooltip("마지막으로 저장된 파일의 전체 경로")]
     public string lastSavedFilePath;
-    // [ ------------------------------- ]
+    // [ -------------------------------------------- ]
 
 
     void Awake()
@@ -58,15 +57,14 @@ public class SandOverlayToggle : MonoBehaviour
         SaveRenderTextureToPNG(rt, filePath);
         Debug.Log($"[SnowRTSaveUI] 저장 완료: {filePath}");
 
-        // [ ----- 여기를 추가했습니다 ----- ]
+        // [ ----- 여기를 추가했습니다 (에러 1번 해결) ----- ]
         // 방금 저장한 경로를 public 변수에 저장
         lastSavedFilePath = filePath;
-        // [ ------------------------------- ]
+        // [ -------------------------------------------- ]
     }
 
     RenderTexture GetCurrentRT()
     {
-        // ... (이하 GetCurrentRT 함수는 동일) ...
         if (directRT != null) return directRT;
         if (pathDrawer == null) pathDrawer = FindObjectOfType<SnowPathDrawer>();
         if (pathDrawer != null && pathDrawer.snowRT != null) return pathDrawer.snowRT;
@@ -85,7 +83,6 @@ public class SandOverlayToggle : MonoBehaviour
 
     void SaveRenderTextureToPNG(RenderTexture rt, string filePath)
     {
-        // ... (이하 SaveRenderTextureToPNG 함수는 동일) ...
         RenderTexture prev = RenderTexture.active;
         RenderTexture.active = rt;
         Texture2D tex = new Texture2D(rt.width, rt.height, TextureFormat.RGBA32, false);
