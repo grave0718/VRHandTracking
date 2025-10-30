@@ -7,7 +7,8 @@ public class SnowPathDrawer : MonoBehaviour
     public RenderTexture snowRT;
 
     [Header("Dependencies")]
-    [SerializeField] private GaugeManager gaugeManager; // 게이지 관리자 연결
+    [SerializeField] private GaugeManager gaugeManager;          // 게이지 관리자
+    [SerializeField] private UndoRedoManager undoRedoManager;    // ★ 추가: 언두/리두 매니저
 
     [Header("Drawing Settings")]
     public float spotSize = 5f;
@@ -29,37 +30,43 @@ public class SnowPathDrawer : MonoBehaviour
     private GameObject[] snowControllerObjs;
     private Vector3 lastPosition;
 
+    // ★ 추가: 스트로크 경계 검출용
+    private bool wasDrawing = false;
+    private bool isDrawingNow = false;
+    private RenderTexture activeRTDuringStroke = null;   // 현재 스트로크가 진행 중인 표면
+    private RenderTexture lastUsedRTThisFrame = null;    // 이번 프레임에 실제로 사용된 표면
+
     private void Awake()
     {
         // "SnowGround" 태그를 가진 모든 오브젝트를 찾음
         snowControllerObjs = GameObject.FindGameObjectsWithTag("SnowGround");
         lastPosition = transform.position;
 
-        // GaugeManager가 연결되었는지 확인
         if (gaugeManager == null)
-        {
-            Debug.LogError("GaugeManager가 SnowPathDrawer에 연결되지 않았습니다! Inspector 창에서 연결해주세요.");
-        }
+            Debug.LogError("GaugeManager가 SnowPathDrawer에 연결되지 않았습니다! Inspector에서 연결해주세요.");
+
+        if (undoRedoManager == null)
+            Debug.LogWarning("UndoRedoManager가 연결되지 않았습니다. Undo/Redo가 작동하지 않습니다.");
     }
 
     private void FixedUpdate()
     {
-        // 오브젝트의 속도 계산
         float velocity = Vector3.Distance(transform.position, lastPosition) / Time.fixedDeltaTime;
+
+        bool anyDrawnThisFrame = false;
+        lastUsedRTThisFrame = null;
 
         // 모든 눈 바닥 오브젝트를 순회
         for (int i = 0; i < snowControllerObjs.Length; i++)
         {
             // 너무 멀리 있는 바닥은 무시
             if (Vector3.Distance(snowControllerObjs[i].transform.position, transform.position) > spotSize * 5f)
-            {
                 continue;
-            }
 
             float groundY = snowControllerObjs[i].transform.position.y;
             float handY = transform.position.y;
 
-            // 그리기 조건: 1. 높이가 맞고, 2. 최소 속도 이상으로 움직이고, 3. 게이지가 남아있을 때
+            // 그리기 조건: 1. 높이 범위, 2. 최소 속도, 3. 게이지 보유
             if (handY >= groundY && handY <= groundY + maxSnowHeight && velocity > minVelocity)
             {
                 if (gaugeManager != null && gaugeManager.HasGauge)
@@ -70,11 +77,57 @@ public class SnowPathDrawer : MonoBehaviour
                     UpdateDrawPosition();
                     DrawOnRenderTexture();
 
-                    // 게이지 소모 요청
+                    // 게이지 소모
                     gaugeManager.ConsumeGauge(depletionRate * Time.fixedDeltaTime);
+
+                    anyDrawnThisFrame = true;
+                    lastUsedRTThisFrame = snowRT;
                 }
             }
         }
+
+        // ===== 스트로크 경계 처리 =====
+        isDrawingNow = anyDrawnThisFrame;
+
+        // (1) 스트로크 시작: 이전 프레임엔 안 그렸고, 이번 프레임엔 그림
+        if (!wasDrawing && isDrawingNow)
+        {
+            activeRTDuringStroke = lastUsedRTThisFrame;
+
+            if (undoRedoManager != null && activeRTDuringStroke != null)
+            {
+                // 표면이 처음이면 등록(베이스 스냅샷 확보)
+                undoRedoManager.RegisterSurface(activeRTDuringStroke);
+                // 시작 시에는 커밋하지 않음 (끝날 때 1회 커밋)
+                // Debug.Log("[DRAW] Stroke Start");
+            }
+        }
+
+        // (2) 스트로크 중 표면이 바뀌는 경우(멀티 바닥 사이를 넘나드는 경우) → 이전 표면 커밋 후 새 표면에서 새 스트로크 시작
+        if (wasDrawing && isDrawingNow && activeRTDuringStroke != null && lastUsedRTThisFrame != null
+            && activeRTDuringStroke != lastUsedRTThisFrame)
+        {
+            if (undoRedoManager != null)
+            {
+                undoRedoManager.CommitStroke(activeRTDuringStroke);         // 이전 표면 커밋
+                undoRedoManager.RegisterSurface(lastUsedRTThisFrame);       // 새 표면 등록
+            }
+            activeRTDuringStroke = lastUsedRTThisFrame;
+            // Debug.Log("[DRAW] Surface switched mid-stroke → Commit & Start new");
+        }
+
+        // (3) 스트로크 종료: 이번 프레임엔 안 그렸고, 이전 프레임엔 그리고 있었음
+        if (wasDrawing && !isDrawingNow)
+        {
+            if (undoRedoManager != null && activeRTDuringStroke != null)
+            {
+                undoRedoManager.CommitStroke(activeRTDuringStroke);
+                // Debug.Log("[DRAW] Stroke End → Commit");
+            }
+            activeRTDuringStroke = null;
+        }
+
+        wasDrawing = isDrawingNow;
         lastPosition = transform.position;
     }
 
@@ -101,7 +154,7 @@ public class SnowPathDrawer : MonoBehaviour
         int kernel_handle = snowComputeShader.FindKernel(drawSpotKernel);
 
         snowComputeShader.SetTexture(kernel_handle, snowImageProperty, snowRT);
-        snowComputeShader.SetFloat(colorValueProperty, 0); // 0으로 설정하여 지우기
+        snowComputeShader.SetFloat(colorValueProperty, 0); // 0으로 설정하여 지우기(기존 로직 유지)
         snowComputeShader.SetFloat(resolutionProperty, snowRT.width);
         snowComputeShader.SetFloat(positionXProperty, position.x);
         snowComputeShader.SetFloat(positionYProperty, position.y);

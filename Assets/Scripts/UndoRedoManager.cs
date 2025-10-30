@@ -1,178 +1,176 @@
-using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
-/// <summary>
-/// Pure Undo/Redo manager for shader-based painting.
-/// - Records strokes as lists of (uv, value, size).
-/// - Rebuild() calls your provided callbacks to clear and redraw.
-/// How to wire:
-///   manager.SetCallbacks(ClearToInitial, DrawSpotAtUV);
-///   // BeginStroke(value,size) → AddPoint(uv) ... → EndStroke()
-///   // Undo(), Redo()
-/// </summary>
 public class UndoRedoManager : MonoBehaviour
 {
-    [Header("Point filtering")]
-    [Tooltip("Minimum UV distance between recorded points in a stroke to reduce over-sampling.")]
-    [SerializeField] private float minUvDistance = 0.0015f;
+    [Header("History Settings")]
+    [Tooltip("표면(RenderTexture)당 저장할 최대 스냅샷 수 (Undo 가능 횟수)")]
+    public int maxHistoryPerSurface = 20;
 
-    // ===== Public API =====
-    public bool CanUndo => _undo.Count > 0;
-    public bool CanRedo => _redo.Count > 0;
+    [Header("Debug")]
+    [Tooltip("간단 실행 로그를 콘솔에 출력")]
+    public bool enableDebug = true;
 
-    /// <summary>Set your paint callbacks.</summary>
-    /// <param name="clearToInitial">Clear RT to initial state (e.g., Graphics.Blit(initialMap, rt))</param>
-    /// <param name="drawSpotAtUV">Draw a spot at uv ∈ [0,1]^2 with value & size (value: e.g., 0 for erase)</param>
-    public void SetCallbacks(Action clearToInitial, Action<Vector2, float, float> drawSpotAtUV)
+    // 표면(RenderTexture)별 스택
+    private Dictionary<RenderTexture, Stack<RenderTexture>> _undoMap =
+        new Dictionary<RenderTexture, Stack<RenderTexture>>();
+    private Dictionary<RenderTexture, Stack<RenderTexture>> _redoMap =
+        new Dictionary<RenderTexture, Stack<RenderTexture>>();
+    private Dictionary<RenderTexture, RenderTexture> _baseMap =
+        new Dictionary<RenderTexture, RenderTexture>(); // 초기 상태 스냅샷
+
+    // 최근 사용 표면(버튼 입력 시 대상)
+    private RenderTexture _lastActiveRT;
+
+    // ---------- 외부 호출 API ----------
+
+    /// <summary>표면을 처음 사용할 때 등록 (초기 스냅샷 확보)</summary>
+    public void RegisterSurface(RenderTexture rt)
     {
-        _clearToInitial = clearToInitial ?? throw new ArgumentNullException(nameof(clearToInitial));
-        _drawSpotAtUV = drawSpotAtUV ?? throw new ArgumentNullException(nameof(drawSpotAtUV));
+        if (rt == null) return;
+        if (_undoMap.ContainsKey(rt)) return;
+
+        _undoMap[rt] = new Stack<RenderTexture>();
+        _redoMap[rt] = new Stack<RenderTexture>();
+
+        var baseSnap = CloneRT(rt);
+        _baseMap[rt] = baseSnap;
+
+        if (enableDebug) Debug.Log($"[HIST] Surface registered {RtInfo(rt)}");
     }
 
-    /// <summary>Start a new stroke. Example: BeginStroke(0f, brushSize) for eraser.</summary>
-        public void BeginStroke(float value, float size)
+    /// <summary>스트로크 종료 시 현재 상태를 커밋(히스토리 푸시)</summary>
+    public void CommitStroke(RenderTexture rt)
     {
-        if (_drawing) return;
-        _drawing = true;
-        _current = _listPool.Get();
-        _currentValue = value;
-        _currentSize = size;
-        _lastRecorded = new Vector2(9999, 9999);
+        if (rt == null) return;
+        if (!_undoMap.ContainsKey(rt)) RegisterSurface(rt);
 
-        Debug.Log($"[UndoRedo] BeginStroke  value={value} size={size}  undo={_undo.Count} redo={_redo.Count}");
+        _undoMap[rt].Push(CloneRT(rt));
+        _redoMap[rt].Clear();               // 새로운 브랜치 시작
+        _lastActiveRT = rt;
+
+        TrimHistory(rt);
+
+        if (enableDebug) Debug.Log($"[HIST] Commit stroke {RtInfo(rt)}  Undo={_undoMap[rt].Count}");
     }
 
-    public void AddPoint(Vector2 uv)
+    public void Undo() { Undo(_lastActiveRT); }
+    public void Redo() { Redo(_lastActiveRT); }
+
+    /// <summary>특정 표면 되돌리기</summary>
+    public void Undo(RenderTexture rt)
     {
-        if (!_drawing) return;
-        if (_current.Count > 0 && (uv - _lastRecorded).sqrMagnitude < (minUvDistance * minUvDistance))
-            return;
+        if (rt == null || !_undoMap.ContainsKey(rt)) { WarnNoSurface("Undo"); return; }
 
-        _current.Add(new Op { uv = uv, value = _currentValue, size = _currentSize });
-        _lastRecorded = uv;
+        var undo = _undoMap[rt];
+        var redo = _redoMap[rt];
 
-        _drawSpotAtUV?.Invoke(uv, _currentValue, _currentSize);
-    }
-
-    public void EndStroke()
-    {
-        if (!_drawing) return;
-        _drawing = false;
-
-        if (_current != null && _current.Count > 0)
+        if (undo.Count == 0)
         {
-            _undo.Push(_current);
-            // 새 작업이 들어오면 redo는 사라지는 게 정상 동작임
-            int cleared = _redo.Count;
-            while (_redo.Count > 0) _listPool.Release(_redo.Pop());
-
-            Debug.Log($"[UndoRedo] EndStroke  pushedPoints={_current.Count}  undo={_undo.Count}  redoCleared={cleared}");
-        }
-        else
-        {
-            _listPool.Release(_current);
-            Debug.Log("[UndoRedo] EndStroke  (no points, nothing pushed)");
-        }
-        _current = null;
-    }
-
-    public void Undo()
-    {
-        if (_undo.Count == 0)
-        {
-            Debug.LogWarning("[UndoRedo] Undo() called but undo stack is empty.");
-            return;
-        }
-
-        var s = _undo.Pop();
-        _redo.Push(s);
-        Debug.Log($"[UndoRedo] Undo  moved stroke points={s.Count}  undo={_undo.Count}  redo={_redo.Count}");
-        Rebuild();
-    }
-
-    public void Redo()
-    {
-        if (_redo.Count == 0)
-        {
-            Debug.LogWarning("[UndoRedo] Redo() called but redo stack is empty.");
-            return;
-        }
-
-        var s = _redo.Pop();
-        _undo.Push(s);
-        Debug.Log($"[UndoRedo] Redo  moved stroke points={s.Count}  undo={_undo.Count}  redo={_redo.Count}");
-        Rebuild();
-    }
-
-    public void Rebuild()
-    {
-        if (_clearToInitial == null || _drawSpotAtUV == null)
-        {
-            Debug.LogWarning("[UndoRedo] Rebuild() but callbacks not set.");
-            return;
-        }
-
-        _clearToInitial.Invoke();
-
-        var arr = _undo.ToArray(); // 최신→과거
-        int totalOps = 0;
-        for (int i = arr.Length - 1; i >= 0; --i)
-        {
-            var stroke = arr[i];
-            totalOps += stroke.Count;
-            for (int j = 0; j < stroke.Count; j++)
+            if (_baseMap.TryGetValue(rt, out var baseSnap))
             {
-                var op = stroke[j];
-                _drawSpotAtUV(op.uv, op.value, op.size);
+                redo.Push(CloneRT(rt));
+                Blit(baseSnap, rt);
+                _lastActiveRT = rt;
+                if (enableDebug) Debug.Log("[UNDO] → Base Snapshot 복원");
             }
+            return;
         }
-        Debug.Log($"[UndoRedo] Rebuild done  strokes={arr.Length}  totalOps={totalOps}");
+
+        redo.Push(CloneRT(rt));           // 현재 상태를 redo로 이동
+        var prev = undo.Pop();            // 이전 스냅샷 적용
+        Blit(prev, rt);
+        _lastActiveRT = rt;
+
+        if (enableDebug) Debug.Log("[UNDO] 실행됨");
     }
 
-    // ===== Internal =====
-    private struct Op
+    /// <summary>특정 표면 다시 실행</summary>
+    public void Redo(RenderTexture rt)
     {
-        public Vector2 uv;
-        public float value;
-        public float size;
+        if (rt == null || !_redoMap.ContainsKey(rt)) { WarnNoSurface("Redo"); return; }
+
+        var undo = _undoMap[rt];
+        var redo = _redoMap[rt];
+
+        if (redo.Count == 0) return;
+
+        undo.Push(CloneRT(rt));           // 현재 상태를 undo로 이동
+        var next = redo.Pop();            // 다음 스냅샷 적용
+        Blit(next, rt);
+        _lastActiveRT = rt;
+
+        if (enableDebug) Debug.Log("[REDO] 실행됨");
     }
 
-    private readonly Stack<List<Op>> _undo = new();
-    private readonly Stack<List<Op>> _redo = new();
-    private List<Op> _current;
-    private float _currentValue, _currentSize;
-    private bool _drawing;
-    private Vector2 _lastRecorded;
-
-    private Action _clearToInitial;
-    private Action<Vector2, float, float> _drawSpotAtUV;
-
-    // Very small List pool to reduce GC churn
-    private readonly ListPool _listPool = new(64);
-
-    private sealed class ListPool
+    // ---------- UI 버튼 래퍼 ----------
+    public void OnUndoButton()
     {
-        private readonly Stack<List<Op>> _pool = new();
-        private readonly int _defaultCapacity;
+        if (_lastActiveRT == null && enableDebug)
+            Debug.LogWarning("[WARN] 최근 표면이 없습니다. 먼저 그림을 그려 표면을 활성화하세요.");
+        Undo();
+    }
 
-        public ListPool(int defaultCapacity) => _defaultCapacity = Mathf.Max(8, defaultCapacity);
+    public void OnRedoButton()
+    {
+        if (_lastActiveRT == null && enableDebug)
+            Debug.LogWarning("[WARN] 최근 표면이 없습니다. Undo 이후에 Redo를 사용하세요.");
+        Redo();
+    }
 
-        public List<Op> Get()
-        {
-            if (_pool.Count > 0)
-            {
-                var l = _pool.Pop();
-                l.Clear();
-                return l;
-            }
-            return new List<Op>(_defaultCapacity);
-        }
+    // ---------- 내부 유틸 ----------
 
-        public void Release(List<Op> list)
-        {
-            list.Clear();
-            _pool.Push(list);
-        }
+    private static RenderTexture CloneRT(RenderTexture src)
+    {
+        if (src == null) return null;
+        var desc = src.descriptor;
+        var dst = new RenderTexture(desc);
+        dst.name = src.name + "_snap";
+        dst.Create();
+        Graphics.Blit(src, dst);
+        return dst;
+    }
+
+    private static void Blit(RenderTexture src, RenderTexture dst)
+    {
+        Graphics.Blit(src, dst);
+    }
+
+    /// <summary>히스토리 초과 시 가장 오래된 스냅샷 1개 제거(메모리 해제 포함)</summary>
+    private void TrimHistory(RenderTexture rt)
+    {
+        var undo = _undoMap[rt];
+        if (undo.Count <= maxHistoryPerSurface) return;
+
+        // Stack 바닥(가장 오래된) 1개 제거 위해 재구성
+        var arr = undo.ToArray(); // top->bottom
+        var oldest = arr[arr.Length - 1];
+
+        SafeDisposeRT(oldest);
+
+        // oldest 제외하여 다시 스택 구성
+        var rebuilt = new Stack<RenderTexture>(arr.Take(arr.Length - 1));
+        _undoMap[rt] = rebuilt;
+
+        if (enableDebug) Debug.Log($"[HIST] Trimmed oldest. Undo={_undoMap[rt].Count}");
+    }
+
+    private static void SafeDisposeRT(RenderTexture rt)
+    {
+        if (rt == null) return;
+        if (rt.IsCreated()) rt.Release();
+        Object.Destroy(rt);
+    }
+
+    private static string RtInfo(RenderTexture rt)
+    {
+        if (rt == null) return "(RT: null)";
+        return $"(RT: {rt.name}, {rt.width}x{rt.height}, {rt.format})";
+    }
+
+    private void WarnNoSurface(string op)
+    {
+        if (enableDebug) Debug.LogWarning($"[WARN] {op}: 대상 표면이 없습니다. 최근에 그림을 그렸는지 확인하세요.");
     }
 }

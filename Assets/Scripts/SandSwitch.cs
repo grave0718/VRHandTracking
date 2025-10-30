@@ -61,7 +61,7 @@ public class SandSwitch : MonoBehaviour
         }
 
         // 초기 알파 0
-        _mat.SetFloat(ID_OverlayAlpha, 0f);
+        // _mat.SetFloat(ID_OverlayAlpha, 0f);
 
         // 버튼 연결
         if (btnRandom) btnRandom.onClick.AddListener(SelectRandom);
@@ -89,12 +89,21 @@ public class SandSwitch : MonoBehaviour
             return;
         }
         if (_fade != null) StopCoroutine(_fade);
-        _fade = StartCoroutine(SwapRoutine(index));
+        // _fade = StartCoroutine(SwapRoutine(index));
+        SetTextureOnly(index);
     }
 
-    IEnumerator SwapRoutine(int nextIndex)
+    void SetTextureOnly(int nextIndex)
     {
-        // 1) 알파 ↓
+        var tex = textures[nextIndex];
+        _mat.SetTexture(ID_OverlayTex, tex);
+        Debug.Log($"[SandSwitch] Overlay switched to {nextIndex} ({tex?.name ?? "null"}) on mat id={_mat.GetInstanceID()}");
+        _currentIndex = nextIndex;
+    }
+
+  IEnumerator SwapRoutine(int nextIndex)
+    {
+        // 1) 알파 ↓ (기존과 동일)
         float fromA = _mat.GetFloat(ID_OverlayAlpha);
         for (float t = 0; t < fadeTime; t += Time.deltaTime)
         {
@@ -103,18 +112,27 @@ public class SandSwitch : MonoBehaviour
         }
         _mat.SetFloat(ID_OverlayAlpha, 0f);
 
-        // 2) 텍스처 교체
+        // 2) 텍스처 교체 (기존과 동일)
         var tex = textures[nextIndex];
         _mat.SetTexture(ID_OverlayTex, tex);
         Debug.Log($"[SandSwitch] Overlay switched to {nextIndex} ({tex?.name ?? "null"}) on mat id={_mat.GetInstanceID()}");
 
-        // 3) 알파 ↑
+        // 3) 알파 ↑ (수정된 부분)
+        // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+        
+        float targetAlpha = 0.38f; // <<< 원하시는 최종 알파값 (원본 머티리얼과 동일하게)
+
         for (float t = 0; t < fadeTime; t += Time.deltaTime)
         {
-            _mat.SetFloat(ID_OverlayAlpha, Mathf.Lerp(0f, 1f, t / fadeTime));
+            // 0f에서 1f가 아닌, targetAlpha까지만 자연스럽게 올라가도록 수정
+            _mat.SetFloat(ID_OverlayAlpha, Mathf.Lerp(0f, targetAlpha, t / fadeTime));
             yield return null;
         }
-        _mat.SetFloat(ID_OverlayAlpha, .5f);
+        
+        // 페이드가 끝난 후 최종 알파값으로 정확히 고정
+        _mat.SetFloat(ID_OverlayAlpha, targetAlpha); 
+
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
         _currentIndex = nextIndex;
         _fade = null;
