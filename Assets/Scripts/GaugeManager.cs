@@ -42,6 +42,7 @@ public class GaugeManager : MonoBehaviour
             currentGauge -= amount;
             if (currentGauge < 0)
             {
+                
                 currentGauge = 0;
             }
             UpdateUIVisual();

@@ -1,8 +1,11 @@
 using UnityEngine;
 
+
+[RequireComponent(typeof(AudioSource))] 
 public class SnowPathDrawer : MonoBehaviour
 {
     [Header("Required Components")]
+    
     public ComputeShader snowComputeShader;
     public RenderTexture snowRT;
 
@@ -15,6 +18,9 @@ public class SnowPathDrawer : MonoBehaviour
     public float maxSnowHeight = 0.3f;
     public float minVelocity = 0.01f;
     public float depletionRate = 1f; // 초당 게이지 소모량
+
+    public AudioClip drawingSound;
+    private AudioSource audioSource;
 
     // Compute Shader 프로퍼티 이름들
     private const string snowImageProperty = "snowImage";
@@ -41,13 +47,27 @@ private void Awake()
         snowControllerObjs = GameObject.FindGameObjectsWithTag("SnowGround");
         lastPosition = transform.position;
 
+
+
+
         if (gaugeManager == null)
             Debug.LogError("GaugeManager가 SnowPathDrawer에 연결되지 않았습니다! Inspector에서 연결해주세요.");
+
+
+
+        audioSource = GetComponent<AudioSource>();
+        if (drawingSound != null)
+        {
+            audioSource.clip = drawingSound;
+        }
+        audioSource.playOnAwake = false;
+        audioSource.loop = true;
 
         if (undoRedoManager == null)
         {
             Debug.LogWarning("UndoRedoManager가 연결되지 않았습니다. Undo/Redo가 작동하지 않습니다.");
         }
+
         else
         {
             // [ ★★★ 핵심 수정 ★★★ ]
@@ -114,6 +134,10 @@ private void Awake()
         if (!wasDrawing && isDrawingNow)
         {
             activeRTDuringStroke = lastUsedRTThisFrame;
+            if (audioSource != null && drawingSound != null && !audioSource.isPlaying)
+            {
+                audioSource.Play();
+            }
 
             if (undoRedoManager != null && activeRTDuringStroke != null)
             {
@@ -140,6 +164,10 @@ private void Awake()
         // (3) 스트로크 종료: 이번 프레임엔 안 그렸고, 이전 프레임엔 그리고 있었음
         if (wasDrawing && !isDrawingNow)
         {
+            if (audioSource != null && audioSource.isPlaying)
+            {
+                audioSource.Stop();
+            }
             if (undoRedoManager != null && activeRTDuringStroke != null)
             {
                 undoRedoManager.CommitStroke(activeRTDuringStroke);
