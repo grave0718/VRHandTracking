@@ -109,23 +109,23 @@ Material:
     - _BTM_Color: {r: 0.5093005, g: 0.82755226, b: 0.990566, a: 1}
     - _Noise_Flow: {r: 0, g: -0.5, b: 0, a: 0}
     - _Noise_Offset: {r: 0, g: 0, b: 0, a: 0}
-    - _Noise_Tiling: {r: 2, g: 2, b: 0, a: 0}
+    - _Noise_Tiling: {r: 5, g: 5, b: 0, a: 0}
     - _Normal_Flow: {r: 0, g: 0, b: 0, a: 0}
     - _Normal_Offset: {r: 1, g: 1, b: 0, a: 0}
     - _Normal_Tiling: {r: 1, g: 1, b: 0, a: 0}
     - _Top_color: {r: 0.7877358, g: 0.9630845, b: 1, a: 0}
     - _Wa_FL: {r: 0, g: -0.5, b: 0, a: 0}
     - _Wa_OF: {r: 0, g: 0, b: 0, a: 0}
-    - _Wa_TI: {r: 3, g: 3, b: 0, a: 0}
+    - _Wa_TI: {r: 5, g: 5, b: 0, a: 0}
     - _Wave_Flow: {r: 0.5, g: 0.5, b: 0, a: 0}
-    - _Wave_tex_tiling: {r: 1, g: 1, b: 0, a: 0}
+    - _Wave_tex_tiling: {r: 3, g: 3, b: 0, a: 0}
     - _main_offset: {r: 1, g: 1, b: 0, a: 0}
     - _maintilling: {r: 1, g: 1, b: 0, a: 0}
     - _w_f: {r: 0, g: -0.5, b: 0, a: 0}
     - _w_o: {r: 0, g: 0, b: 0, a: 0}
     - _w_t: {r: 1, g: 1, b: 0, a: 0}
     - _wave_color: {r: 0.45882353, g: 0.7607843, b: 1, a: 0.72156864}
-    - _wave_offset: {r: 1, g: 1, b: 0, a: 0}
-    - _wave_tex_offset: {r: 1, g: 1, b: 0, a: 0}
-    - _wave_tiling: {r: 1, g: 1, b: 0, a: 0}
+    - _wave_offset: {r: 3, g: 3, b: 0, a: 0}
+    - _wave_tex_offset: {r: 3, g: 3, b: 0, a: 0}
+    - _wave_tiling: {r: 3, g: 3, b: 0, a: 0}
   m_BuildTextureStacks: []
