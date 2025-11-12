@@ -14,24 +14,25 @@ public class PalmUpUIController : MonoBehaviour
     [Range(0f, 1f)]
     public float palmUpThreshold = 0.8f;
 
-    // [ ----- 여기를 추가했습니다 ----- ]
     // relatedObjects 및 그 자식들에게 포함된 모든 Renderer 목록
     private List<Renderer> _renderersToToggle;
-    // [ ------------------------------- ]
+    // 안 보일 때 충돌을 막기 위해 Collider 목록도 함께 관리합니다.
+    private List<Collider> _collidersToToggle;
 
     void Start()
     {
-        // 1. 렌더러 목록을 미리 찾아 저장합니다 (성능 최적화)
+        // 1. 렌더러와 콜라이더 목록을 미리 찾아 저장합니다 (성능 최적화)
         _renderersToToggle = new List<Renderer>();
+        _collidersToToggle = new List<Collider>();
         if (relatedObjects != null)
         {
             foreach (GameObject obj in relatedObjects)
             {
                 if (obj != null)
                 {
-                    // GetComponentsInChildren를 사용해
-                    // 해당 오브젝트와 그 모든 자식의 Renderer를 찾아 리스트에 추가
+                    // GetComponentsInChildren를 사용해 해당 오브젝트와 그 모든 자식의 컴포넌트를 찾아 리스트에 추가
                     _renderersToToggle.AddRange(obj.GetComponentsInChildren<Renderer>());
+                    _collidersToToggle.AddRange(obj.GetComponentsInChildren<Collider>());
                 }
             }
         }
@@ -59,18 +60,27 @@ public class PalmUpUIController : MonoBehaviour
         }
     }
 
-    // [ ----- 여기를 수정했습니다 ----- ]
     // SetActive(false) 대신 renderer.enabled = false/true를 호출
     private void SetAllVisible(bool isVisible)
     {
-        if (_renderersToToggle == null) return;
-
-        // 리스트에 있는 모든 렌더러의 'enabled' 속성을 변경
-        foreach (Renderer rend in _renderersToToggle)
+        if (_renderersToToggle != null)
         {
-            if (rend != null)
+            // 리스트에 있는 모든 렌더러의 'enabled' 속성을 변경
+            foreach (Renderer rend in _renderersToToggle)
             {
-                rend.enabled = isVisible;
+                if (rend != null)
+                {
+                    rend.enabled = isVisible;
+                }
+            }
+        }
+
+        // 콜라이더의 활성화 상태도 함께 변경하여 충돌을 제어합니다.
+        if (_collidersToToggle != null)
+        {
+            foreach (Collider coll in _collidersToToggle)
+            {
+                if (coll != null) coll.enabled = isVisible;
             }
         }
     }

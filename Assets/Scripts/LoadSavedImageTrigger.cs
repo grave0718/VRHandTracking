@@ -105,11 +105,12 @@ public class LoadSavedImageTrigger : MonoBehaviour
                         Debug.Log($"[LoadImageTrigger] {objectToActivate1.name} 활성화!");
                     }
 
-                    if (objectToActivate2 != null&& resetBool == 0)
+                    if (objectToActivate2 != null&& resetBool <2)
                     {
                         objectToActivate2.SetActive(true);
                         Debug.Log($"[LoadImageTrigger] {objectToActivate2.name} 활성화!");
-                        resetBool = 1;
+                        resetBool += 1;
+                        Debug.Log(resetBool);
                     }
                 }
                 else
