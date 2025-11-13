@@ -3,7 +3,27 @@ guid: 68fef2cf55b5507449c9985bee7110ad
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Bridge_Mat
+    second: {fileID: 2100000, guid: bdf4185922a60164084f0252ab2b72e6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Cable_Mat
+    second: {fileID: 2100000, guid: 0bc9d1c61dea7c24b8a2c7a267446f67, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Road_Mat
+    second: {fileID: 2100000, guid: 5a484404435b21b439f09b8cbf6fe0ab, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: SubBridge_Mat
+    second: {fileID: 2100000, guid: 36d8df8da0aa299429eda67775af57f7, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
