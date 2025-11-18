@@ -20,6 +20,9 @@ public class TutorialNext : MonoBehaviour
 
     [Tooltip("튜토리얼 인덱스 4에서 활성화할 오브젝트")]
     public GameObject objectToActivateOnIndex4;
+    public GameObject objectOrbs;
+    public GameObject objectExtras;
+    
 
     [Tooltip("튜토리얼 인덱스 6에서 활성화할 오브젝트")]
     public GameObject objectToActivateOnIndex6;
@@ -33,8 +36,12 @@ public class TutorialNext : MonoBehaviour
 
     private bool _isReady = true; // 쿨다운 상태 플래그
 
+
+
     void Start()
     {
+        objectOrbs.SetActive(false);
+        objectExtras.SetActive(false);
         // 1. 필수 매니저 연결 확인 및 자동 찾기
         if (tutorialManager == null)
         {
@@ -160,6 +167,7 @@ public class TutorialNext : MonoBehaviour
             if (nextIndex == 4 && objectToActivateOnIndex4 != null)
             {
                 objectToActivateOnIndex4.SetActive(true);
+                objectOrbs.SetActive(true);
                 Debug.Log(
                     $"[TutorialNext] 튜토리얼 인덱스 4: '{objectToActivateOnIndex4.name}' 활성화."
                 );
@@ -176,6 +184,7 @@ public class TutorialNext : MonoBehaviour
             // 튜토리얼의 마지막 인덱스를 넘어서면 (모든 이미지가 꺼지면) 튜토리얼 종료
             if (nextIndex >= tutorialManager.TutorialImages.Count)
             {
+                objectExtras.SetActive(true);
                 gameObject.SetActive(false);
                 // GameEnd 버튼 활성화
                 if (gameEndButton != null)

@@ -44,6 +44,8 @@ public class Reset : MonoBehaviour
 
     [Tooltip("튜토리얼 7단계 이후 다시 활성화할 TutorialNext 버튼 오브젝트")]
     public GameObject tutorialNextButton;
+    public GameObject tutorialEndButton;
+    public GameObject tutorialRestartButton;
 
     [Header("5. 터치 감지")]
     [Tooltip("터치할 손의 태그")]
@@ -167,6 +169,9 @@ public class Reset : MonoBehaviour
                 Debug.Log(
                     "[Reset] 튜토리얼 7단계에서 트리거됨. 다음 튜토리얼로 진행하고 '다음' 버튼을 다시 활성화합니다."
                 );
+                tutorialEndButton.SetActive(true);
+                //tutorialRestartButton.SetActive(true);
+               
                 tutorialManager.ShowNextTutorial();
                 if (tutorialNextButton != null)
                 {
@@ -178,7 +183,8 @@ public class Reset : MonoBehaviour
 
                     var nextButtonRenderer = tutorialNextButton.GetComponent<Renderer>();
 
-                    nextButtonRenderer.enabled = false;
+                    //nextButtonRenderer.enabled = false;
+                     tutorialNextButton.SetActive(false);
                 }
                 else
                 {
