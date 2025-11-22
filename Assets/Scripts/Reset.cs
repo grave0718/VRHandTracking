@@ -35,7 +35,7 @@ public class Reset : MonoBehaviour
     [Tooltip(
         "다시하기 버튼을 사용할 수 있는 총 횟수. 튜토리얼에서 1회 사용되므로, 게임 중 1회 더 사용하려면 2로 설정하세요. 0 이하면 무제한입니다."
     )]
-    public int maxResetCount = 2;
+    public int maxResetCount = 0;
     private int _resetsUsed = 0;
 
     [Header("4. 튜토리얼 연동 (선택)")]
@@ -53,6 +53,9 @@ public class Reset : MonoBehaviour
 
     private bool _isReady = true;
     private SnowController[] snowControllers; // 모든 눈 바닥 컨트롤러
+
+
+    public int isTuto = 0;
 
     void Start()
     {
@@ -169,8 +172,9 @@ public class Reset : MonoBehaviour
                 Debug.Log(
                     "[Reset] 튜토리얼 7단계에서 트리거됨. 다음 튜토리얼로 진행하고 '다음' 버튼을 다시 활성화합니다."
                 );
-                tutorialEndButton.SetActive(true);
-                //tutorialRestartButton.SetActive(true);
+                // tutorialEndButton.SetActive(true);
+                tutorialRestartButton.SetActive(true);
+                tutorialNextButton.SetActive(true);
                
                 tutorialManager.ShowNextTutorial();
                 if (tutorialNextButton != null)
@@ -184,7 +188,7 @@ public class Reset : MonoBehaviour
                     var nextButtonRenderer = tutorialNextButton.GetComponent<Renderer>();
 
                     //nextButtonRenderer.enabled = false;
-                     tutorialNextButton.SetActive(false);
+
                 }
                 else
                 {

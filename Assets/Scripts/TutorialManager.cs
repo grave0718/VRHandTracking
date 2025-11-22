@@ -69,10 +69,14 @@ public class TutorialManager : MonoBehaviour
     /// </summary>
     public void ShowPreviousTutorial()
     {
-        if (TutorialIndex > 0)
+        if (TutorialIndex > 0 && TutorialIndex < 8)
         {
             TutorialIndex--;
             UpdateTutorialDisplay();
         }
+        else if(TutorialIndex == 8){
+            TutorialIndex = 0;
+            UpdateTutorialDisplay();
     }
+}
 }

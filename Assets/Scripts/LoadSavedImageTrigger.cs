@@ -1,7 +1,7 @@
+using System;
+using System.Collections;
+using System.IO;
 using UnityEngine;
-using System.IO;        
-using System.Collections; 
-using System; 
 
 [RequireComponent(typeof(Collider))]
 public class LoadSavedImageTrigger : MonoBehaviour
@@ -12,34 +12,46 @@ public class LoadSavedImageTrigger : MonoBehaviour
 
     [Header("2. 터치 감지")]
     public string handTag = "PlayerHand";
-    public float cooldownTime = 1.0f; 
+    public float cooldownTime = 1.0f;
 
     private bool _isReady = true;
-    private Texture2D _loadedTexture; 
-
+    private Texture2D _loadedTexture;
 
     public GameObject objectToActivate1;
 
     public GameObject objectToActivate2;
     int resetBool = 0;
-
+    public TutorialNext tutorialNext;
 
     void Start()
     {
         if (snowSaveManager == null)
-            Debug.LogError($"[LoadImageTrigger] {gameObject.name}: 'snowSaveManager'가 연결되지 않았습니다!");
-        
+            Debug.LogError(
+                $"[LoadImageTrigger] {gameObject.name}: 'snowSaveManager'가 연결되지 않았습니다!"
+            );
+
         if (completeImageRenderer == null)
         {
-            Debug.LogError($"[LoadImageTrigger] {gameObject.name}: 'completeImageRenderer'가 연결되지 않았습니다!");
+            Debug.LogError(
+                $"[LoadImageTrigger] {gameObject.name}: 'completeImageRenderer'가 연결되지 않았습니다!"
+            );
         }
         else
         {
             completeImageRenderer.gameObject.SetActive(false);
         }
         GetComponent<Collider>().isTrigger = true;
+        if (tutorialNext == null)
+        {
+            tutorialNext = FindObjectOfType<TutorialNext>();
+            if (tutorialNext == null)
+            {
+                Debug.LogWarning(
+                    $"[LoadImageTrigger] {gameObject.name}: 'tutorialNext'가 연결되지 않았습니다. 'istuto' 값 확인이 불가능합니다."
+                );
+            }
+        }
     }
-
 
     public void DeactivateLoadedImageAndButtons()
     {
@@ -55,19 +67,21 @@ public class LoadSavedImageTrigger : MonoBehaviour
         {
             objectToActivate2.SetActive(false);
         }
-        Debug.Log($"[{nameof(LoadSavedImageTrigger)}] 불러온 이미지와 관련 버튼을 비활성화했습니다.");
+        Debug.Log(
+            $"[{nameof(LoadSavedImageTrigger)}] 불러온 이미지와 관련 버튼을 비활성화했습니다."
+        );
     }
 
     private void OnTriggerEnter(Collider other)
     {
         if (_isReady && other.CompareTag(handTag))
         {
-            if (snowSaveManager == null || completeImageRenderer == null) return;
+            if (snowSaveManager == null || completeImageRenderer == null)
+                return;
             Debug.Log("이미지 불러오기 트리거 작동!");
             StartCoroutine(LoadAndApplyImageRoutine());
         }
     }
-
 
     private IEnumerator LoadAndApplyImageRoutine()
     {
@@ -75,7 +89,7 @@ public class LoadSavedImageTrigger : MonoBehaviour
 
         try
         {
-            string filePath = snowSaveManager.lastSavedFilePath; 
+            string filePath = snowSaveManager.lastSavedFilePath;
 
             if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
             {
@@ -90,12 +104,14 @@ public class LoadSavedImageTrigger : MonoBehaviour
                 {
                     Destroy(_loadedTexture);
                 }
-                
-                _loadedTexture = new Texture2D(2, 2); 
-                
-                if (_loadedTexture.LoadImage(fileData)) 
+
+                _loadedTexture = new Texture2D(2, 2);
+
+                if (_loadedTexture.LoadImage(fileData))
                 {
-                    Debug.Log($"[LoadImageTrigger] {completeImageRenderer.gameObject.name}의 머티리얼에 텍스처 적용!");
+                    Debug.Log(
+                        $"[LoadImageTrigger] {completeImageRenderer.gameObject.name}의 머티리얼에 텍스처 적용!"
+                    );
                     completeImageRenderer.material.mainTexture = _loadedTexture;
                     completeImageRenderer.gameObject.SetActive(true);
 
@@ -105,22 +121,33 @@ public class LoadSavedImageTrigger : MonoBehaviour
                         Debug.Log($"[LoadImageTrigger] {objectToActivate1.name} 활성화!");
                     }
 
-                    if (objectToActivate2 != null&& resetBool <2)
+                    if (objectToActivate2 != null && resetBool < 2)
                     {
                         objectToActivate2.SetActive(true);
                         Debug.Log($"[LoadImageTrigger] {objectToActivate2.name} 활성화!");
-                        resetBool += 1;
-                        Debug.Log(resetBool);
+                        if (tutorialNext != null && tutorialNext.istuto == 0)
+                        {
+                            resetBool += 1;
+                            Debug.Log($"튜토리얼 진행 중이므로 resetBool 증가: {resetBool}");
+                        }
+                        else
+                        {
+                            Debug.Log(
+                                $"튜토리얼이 아니므로 resetBool은 증가하지 않음: {resetBool}"
+                            );
+                        }
                     }
                 }
                 else
                 {
-                    Debug.LogError("[LoadImageTrigger] PNG 데이터로 텍스처를 로드하는데 실패했습니다.");
-                    Destroy(_loadedTexture); 
+                    Debug.LogError(
+                        "[LoadImageTrigger] PNG 데이터로 텍스처를 로드하는데 실패했습니다."
+                    );
+                    Destroy(_loadedTexture);
                 }
             }
         }
-        catch (Exception e) 
+        catch (Exception e)
         {
             Debug.LogError($"[LoadImageTrigger] 파일 읽기 오류: {e.Message}");
             // 오류가 발생해도 쿨다운은 아래에서 실행됨
@@ -131,7 +158,6 @@ public class LoadSavedImageTrigger : MonoBehaviour
         yield return new WaitForSeconds(cooldownTime);
         _isReady = true;
     }
-
 
     void OnDestroy()
     {

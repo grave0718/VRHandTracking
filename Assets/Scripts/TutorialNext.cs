@@ -22,7 +22,6 @@ public class TutorialNext : MonoBehaviour
     public GameObject objectToActivateOnIndex4;
     public GameObject objectOrbs;
     public GameObject objectExtras;
-    
 
     [Tooltip("튜토리얼 인덱스 6에서 활성화할 오브젝트")]
     public GameObject objectToActivateOnIndex6;
@@ -36,7 +35,12 @@ public class TutorialNext : MonoBehaviour
 
     private bool _isReady = true; // 쿨다운 상태 플래그
 
+    public Texture defaultTexture;
 
+    private Renderer objectRenderer;
+    public Texture textureForIndex7;
+
+public int istuto = 1;
 
     void Start()
     {
@@ -88,13 +92,21 @@ public class TutorialNext : MonoBehaviour
         if (objectToActivateOnIndex6 != null)
             objectToActivateOnIndex6.SetActive(false);
     }
-    void Update(){
-                        var objectRenderer = GetComponent<Renderer>();
-       var nextIndex = tutorialManager.TutorialIndex;
-        if(nextIndex == 8){
 
-            objectToActivateOnIndex6.SetActive(false);
+    void Update()
+    {
+        var objectRenderer = GetComponent<Renderer>();
+        var nextIndex = tutorialManager.TutorialIndex;
+        if (nextIndex > 7)
+        {
+            gameObject.SetActive(true);
+            // objectToActivateOnIndex6.SetActive(false);
             objectRenderer.enabled = true;
+            objectRenderer.material.mainTexture = textureForIndex7;
+        }
+        else
+        {
+            objectRenderer.material.mainTexture = defaultTexture;
         }
     }
 
@@ -120,8 +132,6 @@ public class TutorialNext : MonoBehaviour
             int nextIndex = tutorialManager.TutorialIndex;
 
             // --- 요청된 추가 기능 실행 ---
-
-
 
             // 1. 튜토리얼 인덱스 7 (8번째 이미지)에서 텔레포트 실행 및 버튼 상태 변경
             if (nextIndex == 7)
@@ -198,6 +208,7 @@ public class TutorialNext : MonoBehaviour
                     gameFinButton.GetComponent<Collider>().enabled = true;
                     Debug.Log("[TutorialNext] 튜토리얼 종료: GameFin 버튼의 충돌을 활성화합니다.");
                 }
+                istuto = 0;
             }
             // 쿨다운 시작
             StartCoroutine(CooldownRoutine());
